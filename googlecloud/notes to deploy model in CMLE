@@ -1,0 +1,100 @@
+notes to deploy model in CMLE
+
+Step 1
+Set necessary variables and create a bucket:
+
+REGION=us-central1
+BUCKET=$(gcloud config get-value project)
+TFVERSION=1.7
+gsutil mb -l ${REGION} gs://${BUCKET}
+Step 2
+Copy trained model into your bucket:
+
+gsutil -m cp -R gs://cloud-training-demos/babyweight/trained_model gs://${BUCKET}/babyweight
+Deploy trained model
+Step 1
+Set necessary variables:
+
+MODEL_NAME=babyweight
+MODEL_VERSION=ml_on_gcp
+MODEL_LOCATION=$(gsutil ls gs://${BUCKET}/babyweight/export/exporter/ | tail -1)
+Step 2
+Deploy trained model:
+
+gcloud ml-engine models create ${MODEL_NAME} --regions $REGION
+gcloud ml-engine versions create ${MODEL_VERSION} --model ${MODEL_NAME} --origin ${MODEL_LOCATION} --runtime-version $TFVERSION
+Code for your frontend
+Step 1
+Clone the course repository:
+
+cd ~
+git clone https://github.com/GoogleCloudPlatform/training-data-analyst
+Step 2
+You can use the Cloud Shell code editor to view and edit the contents of these files.
+
+Click on the (b8ebde10ba2a31c8.png) icon on the top right of your Cloud Shell window to launch Code Editor.
+
+Once launched, navigate to the ~/training-data-analyst/courses/machine_learning/deepdive/06_structured/labs/serving directory.
+
+Step 3
+Open the application/main.pyand application/templates/form.html files and notice the #TODOs within the code. These need to be replaced with code. The next section tells you how.
+
+Modify main.py
+Step 1
+Open the main.py file by clicking on it. Notice the lines with # TODO for setting credentials and the api to use.
+
+Set the credentials to use Google Application Default Credentials (recommended way to authorize calls to our APIs when building apps deployed on AppEngine):
+
+credentials = GoogleCredentials.get_application_default()
+Specify the api name (ML Engine API) and version to use:
+
+api = discovery.build('ml', 'v1', credentials=credentials)
+Step 2
+Scroll further down in main.py and look for the next #TODO in the method get_prediction(). In there, specify, using the parent variable, the name of your trained model deployed on Cloud MLE:
+
+parent = 'projects/%s/models/%s' % (project, model_name)
+Step 3
+Now that you have all the pieces for making the call to your model, build the call request by specifying it in the prediction variable:
+
+prediction = api.projects().predict(body=input_data, name=parent).execute()
+Step 4
+The final #TODO (scroll towards bottom) is to get gestation_weeks from the form data and cast into a float within the features array:
+
+features['gestation_weeks'] = float(data['gestation_weeks'])
+Step 5
+Save the changes you made using the File > Save button on the top left of your code editor window.
+
+3b0e6c092072fec5.png
+
+Modify form.html
+form.html is the front-end of your app. The user fills in data (features) about the mother based on which we will make the predictions using our trained model.
+
+Step 1
+In code editor, navigate to the application/templates directory and click to open the form.html file.
+
+Step 2
+There is one #TODO item here. Look for the div segment for Plurality and add options for other plurality values (2, 3, etc).
+
+<md-option value="2">Twins</md-option>
+<md-option value="3">Triplets</md-option>
+Step 3
+Save the changes you made using the File > Save button on the top left of your code editor window.
+
+Deploy and test your app
+Step 1
+In Cloud Shell, run the deploy.sh script to install required dependencies and deploy your app engine app to the cloud.
+
+cd training-data-analyst/courses/machine_learning/deepdive/06_structured/labs/serving
+./deploy.sh
+Note: Choose a region for App Engine when prompted and follow the prompts during this process
+
+Step 2
+Go to the url https://<PROJECT-ID>.appspot.com and start making predictions.
+
+Note: Replace <PROJECT-ID> with your Project ID.
+
+End your lab
+When you have completed your lab, click End Lab. Qwiklabs removes the resources you’ve used and cleans the account for you.
+
+You will be given an opportunity to rate the lab experience. Select the applicable number of stars, type a comment, and then click Submit.
+
